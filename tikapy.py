@@ -4,8 +4,10 @@
     >>> filename = 'example.pdf'
     >>> get_metadata(filename)  # doctest: +ELLIPSIS
     {...'title': 'Apache Tika - Wikipedia, the free encyclopedia'...}
-    >>> get_text(filename)  # doctest: +ELLIPSIS
+    >>> get_content(filename)  # doctest: +ELLIPSIS
     'Apache Tika - Wikipedia...more than 1400 file types...MIME types...'
+    >>> extract(filename)  # doctest: +ELLIPSIS
+    {...}
 """
 import json
 import os
@@ -38,10 +40,19 @@ def get_metadata(filename):
     return metadata
 
 
-def get_text(filename):
+def get_content(filename):
     result = run('--text-main', filename)
     unicode_stdout = result.stdout.decode('utf-8')
     return unicode_stdout
+
+
+def extract(filename):
+    meta = get_metadata(filename)
+    content = get_content(filename)
+    return {
+        'meta': meta,
+        'content': content
+    }
 
 
 if __name__ == "__main__":
