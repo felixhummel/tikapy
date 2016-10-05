@@ -5,7 +5,7 @@
     >>> get_metadata(filename)  # doctest: +ELLIPSIS
     {...'title': 'Apache Tika - Wikipedia, the free encyclopedia'...}
     >>> get_content(filename)  # doctest: +ELLIPSIS
-    'Apache Tika - Wikipedia...more than 1400 file types...MIME types...'
+    '...Developer(s) Apache Software...more than 1400 file types...Apache Tika - Wikipedia...'
     >>> extract(filename)  # doctest: +ELLIPSIS
     {...}
 """
@@ -41,7 +41,7 @@ def get_metadata(filename):
 
 
 def get_content(filename):
-    result = run('--text-main', filename)
+    result = run('--text', filename)
     unicode_stdout = result.stdout.decode('utf-8')
     return unicode_stdout
 
