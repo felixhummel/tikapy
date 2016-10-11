@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-Expects the `Tika Server`_ to be running on ``http://localhost:9998``. You can
-override this by setting ``TIKA_SERVER_URL``, e.g.::
+Expects the Tika Server to be running on `http://localhost:9998`. To
+override this::
 
     TIKA_SERVER_URL=http://tika.felixhummel.de
 
@@ -20,8 +20,6 @@ Usage::
     '...Developer(s) Apache Software...more than 1400 file types...Apache Tika - Wikipedia...'
 
 Please note that the binary mode is essential when opening files.
-
-.. _Tika Server: http://www.apache.org/dyn/closer.cgi/tika/tika-server-1.13.jar
 """
 import json
 import os
