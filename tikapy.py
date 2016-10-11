@@ -1,54 +1,58 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+Expects the `Tika Server`_ to be running on ``http://localhost:9998``. You can
+override this by setting ``TIKA_SERVER_URL``, e.g.::
+
+    TIKA_SERVER_URL=http://tika.felixhummel.de
+
+Usage::
+
     >>> filename = 'example.pdf'
-    >>> get_metadata(filename)  # doctest: +ELLIPSIS
-    {...'title': 'Apache Tika - Wikipedia, the free encyclopedia'...}
-    >>> get_content(filename)  # doctest: +ELLIPSIS
+    >>> with open('example.pdf', mode='rb') as f:
+    ...     data = f.read()
+    >>> info = extract(data)
+    >>> info['meta']['Content-Type']
+    'application/pdf'
+    >>> info['meta']['title']
+    'Apache Tika - Wikipedia, the free encyclopedia'
+    >>> info['content']  # doctest: +ELLIPSIS
     '...Developer(s) Apache Software...more than 1400 file types...Apache Tika - Wikipedia...'
-    >>> extract(filename)  # doctest: +ELLIPSIS
-    {...}
+
+Please note that the binary mode is essential when opening files.
+
+.. _Tika Server: http://www.apache.org/dyn/closer.cgi/tika/tika-server-1.13.jar
 """
 import json
 import os
-import subprocess
+import requests
 
 
-JAVA = os.environ.get('TIKA_JAVA', 'java')
-TIKA_JAR = os.environ.get('TIKA_JAR', 'tika-app-1.13.jar')
+TIKA_SERVER_URL = os.environ.get('TIKA_SERVER_URL', 'http://localhost:9998').rstrip('/')
+meta_url = TIKA_SERVER_URL + '/meta'
+tika_url = TIKA_SERVER_URL + '/tika'
 
 
-def run(*args):
+def get_metadata(data):
+    return requests.put(meta_url, data, headers={'Accept': 'application/json'}).json()
+
+
+def get_content(content_type, data):
+    # we need to supply the Content-Type to /tika
+    headers = {'Content-Type': content_type, 'Accept-Encoding': 'utf-8'}
+    content = requests.put(tika_url, data, headers=headers).content
+    return content.decode('utf-8')
+
+
+def extract(data):
     """
-    Run tika and capture both stderr and stdout.
-
-    Raises CalledProcessError on error. See
-    https://docs.python.org/3/library/subprocess.html#subprocess.run
+    :param data: Anything requests can use for put, i.e. dictionary, bytes,
+                 or file-like object.
     """
-    cmd = [JAVA, '-jar', TIKA_JAR, '--encoding=utf-8'] + list(args)
-    return subprocess.run(
-            cmd,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-
-
-def get_metadata(filename):
-    result = run('--json', filename)
-    unicode_stdout = result.stdout.decode('utf-8')
-    metadata = json.loads(unicode_stdout)
-    return metadata
-
-
-def get_content(filename):
-    result = run('--text', filename)
-    unicode_stdout = result.stdout.decode('utf-8')
-    return unicode_stdout
-
-
-def extract(filename):
-    meta = get_metadata(filename)
-    content = get_content(filename)
+    meta = get_metadata(data)
+    if hasattr(data, 'seek'):
+        data.seek(0)
+    content = get_content(meta['Content-Type'], data)
     return {
         'meta': meta,
         'content': content
